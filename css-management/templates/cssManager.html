@@ -1,0 +1,279 @@
+<!doctype html>
+<!-- TODO--DYNAMIC INPUT add selectors as needed -->
+<!-- TODO--DYNAMIC INPUT remove selectors as needed -->
+<!-- TODO--DYNAMIC INPUT/ add key value pairs as needed  -->
+<!-- TODO--DYNAMIC INPUT remove key value pairs as needed  -->
+<!-- TODO--DYNAMIC INPUT add CSS block rows and borders as needed  -->
+<!-- TODO--DYNAMIC INPUT remove CSS block rows and borders as needed  -->
+<!-- TODO--SAVE to new file -->
+<!-- TODO--SAVE to existing file -->
+<!-- TODO--AUTOSAVE make the data-autosave-url html attribute a variable? -->
+<!-- TODO--AUTOSAVE/ make auto save process indicate info saved message using html tag with the autosave-message class -->
+
+<html lang="en">
+  <head>
+  	<title>Table 03</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,100,300,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="../static/style.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script>
+		
+		
+
+		
+
+		/**
+		 * Global variables
+		 */
+		const save_updates = debounce(() => save_input()); // debounce the save_input function
+		const css_block_index = 0; // the index of the css block of selectors and properties
+		const css_selector_index = 0; // the index of the css selector input
+		const css_propval_index = 0; // the index of the property and value input
+		
+		/**
+		 * run a function once every x milliseconds
+		 */
+		function debounce(func, timeout = 300) {
+			let timer;
+			return (...args) => {
+				clearTimeout(timer);
+				timer = setTimeout(() => { func.apply(this, args); }, timeout);
+			};
+		}
+
+		/**
+		 * debounce, but execute as soon as the function is called rather than waiting for the timeout
+		 */
+		function debounce_leading(func, timeout = 300){
+			let timer;
+			return (...args) => {
+				if (!timer) {
+				func.apply(this, args);
+				}
+				clearTimeout(timer);
+				timer = setTimeout(() => {
+				timer = undefined;
+				}, timeout);
+			};
+		}
+
+		/**
+		 * Get the css block index of the element
+		 * @param  {element} element - description
+		 * @return {integer} - the index of the css block
+		 */
+		function get_css_block_index(element){
+			return element.name.match(/...-(\d+)-(\d+)-(\d+)/)[1];
+		}
+		
+		/**
+		 * Get the css selector index of the element
+		 * @param  {element} element - description
+		 * @return {integer} - the css selector pair index 
+		 */
+		function get_css_selector_index(element){
+			return element.name.match(/...-(\d+)-(\d+)-(\d+)/)[2];
+		}
+		
+		/**
+		 * Get the css property value pair index of the element
+		 * @param  {element} element - description
+		 * @return {integer} - the css property value pair index 
+		 */
+		function get_css_propval_index(element){
+			return element.name.match(/...-(\d+)-(\d+)-(\d+)/)[3];
+		}
+
+		/**
+		 * get the proprty input if the value input is passed,
+		 * or get the value input if the property input is passed
+		 * @param  {input} input_element 
+		 * @return {input} the corresponding property or value input
+		 */
+		function get_corresponding_key_value(input_element) { //TEST
+			
+			if (element.name.includes("val")) {
+				row_index = input_element.id.match(/...-(\d+)-(\d+)/)[1];
+				input_index = input_element.id.match(/...-(\d+)-(\d+)/)[2];
+		
+				return document.getElementById("prop-" + row_index + "-" + input_index);
+			}
+			else {
+				row_index = input_element.id.match(/...-(\d+)-(\d+)/)[1];
+				input_index = input_element.id.match(/...-(\d+)-(\d+)/)[2];
+		
+				return document.getElementById("val-" + row_index + "-" + input_index);
+			}
+		}
+		
+		/**
+		 * Handles the dynamic addition or removal of the CSS block rows,
+		 * and the dynamic addition or removal of the key/ value pairs and 
+		 * css selectors within each CSS block row
+		 * @param  {input} input_element - the css selector, property, or value input element
+		 */
+		function dynamic_input_handler(input_element) {
+			if (input_element.classList.contains("css-selector-input-cell")) {//TEST
+				// add css selector input field
+				$('.css-selector-input-cell').appendTo('<input type="text" class="form-control css-selector-input-cell" placeholder="CSS Selector" value="" data-autosave-url="http://localhost:5501/save-css">');
+			}
+			else {//TEST
+				
+				// If this is a property or value input field
+				if (input_element.classList.contains("val-") || input_element.classList.contains("prop-")) {//TEST
+					
+					// Get the corresponding css property or value input element
+					var corresponding_input = get_corresponding_key_value(input_element);
+		
+					// if this is a property or value input field, 
+					if (input_element.value != "" && corresponding_input.value != "") {//TEST
+						// Get index of property and value input fields
+						row_index = input_element.id.match(/...-(\d+)-(\d+)/)[1];
+						input_index = input_element.id.match(/...-(\d+)-(\d+)/)[2] + 1; // start the next index to create 
+																						// a new propert and value pair
+		
+						// add a new property and value input field
+						$('.propval-input-cell').appendTo('<input name="prop-' + row_index + '-' + input_index + '" id="prop-' + row_index + '-' + input_index + '" type="text" placeholder="Property" value="" data-autosave-url="http://localhost:5501/save-css">' + 
+														'<input name="val-' + row_index + '-' + input_index + '" id="val-' + row_index + '-' + input_index + '"type="text" placeholder="Value" value="" data-autosave-url="http://localhost:5501/save-css">');
+					}
+				}
+			}
+		}
+	
+		/**
+		 * send input to server
+		 */
+		function save_input() {
+			var url = $(this).data('autosave-url');
+			var data = {};
+			data[$(this).attr('name')] = $(this).val();
+			$.post(url, data);
+			$.post("test.php", $( "#testform" ).serialize()); //TODO fix url, handle sucess / and fails 
+		}
+
+		/**
+		 * Auto save the user input as the user changes the input fields and 
+		 * add or remove user input fields if there are no more empty fields 
+		 * or too many empty fields 
+		 */
+		$(document).ready(function() { //TEST
+			
+			$('input[data-autosave-url]').on('change', function() {
+				// Save the updates
+				save_updates(this);
+		
+				// add new input fields as needed
+				dynamic_input_handler(this);
+			});
+		});
+		
+		/* Alternative approach to autosave form felds see below:
+		// Auto save--see https://www.youtube.com/watch?v=jyAjUxgbu5Y and https://codepen.io/dcode-software/pen/MWOvRzo?editors=1010
+		document.addEventListener("DOMContentLoaded", () => {
+			const SAVING_MESSAGE = "Saving...";
+			const SAVED_MESSAGE = "All changes saved.";
+		
+			document
+			.querySelectorAll(".autosave-message")
+			.forEach((el) => (el.textContent = SAVED_MESSAGE));
+		
+			document.querySelectorAll("[data-autosave-url]").forEach((inputField) => {
+				inputField.addEventListener("change", async () => {
+					// const name = inputField.getAttribute("name");
+					// const value = inputField.value;
+					// const url = inputField.dataset.autosaveUrl;
+					// const autosaveMessageEl = inputField
+					// .closest(".container")
+					// .querySelector(".autosave-message");
+					// const formData = new FormData();
+		
+					// formData.append(name, value);
+					// autosaveMessageEl.classList.add("autosave-message--saving");
+					// autosaveMessageEl.textContent = SAVING_MESSAGE;
+		
+					// const response = await fetch(url, {
+					// method: "POST",
+					// body: formData
+					// });
+		
+					// autosaveMessageEl.classList.remove("autosave-message--saving");
+					// autosaveMessageEl.textContent = SAVED_MESSAGE;
+				});
+			});
+		});
+		*/
+	</script>
+	
+  </head>
+	<body>
+		<section>
+			<div class="container">
+				<div class="row">
+					<div>
+						<h2>CSS Classesssss!</h2>
+					</div>
+				</div>
+				<div class="row">
+					<div>
+						
+						<table>
+							<!-- Header -->
+							<thead>
+							<tr>
+								<th>CSS Selectors</th>
+								<th>Property</th>
+							</tr>
+							</thead>
+							<tbody>
+							
+							<!-- The first CSS Selector data -->
+							<tr>
+								<th id="selector-cell-0-0" scope="row">
+									<input name="selector-0-0" id="selector-0-0" type="text" class="css-selector-input-cell" placeholder="CSS Selector" value="" data-autosave-url="http://localhost:5501/save-css">
+								</th>
+								<td id="propval-cell-0-0">
+									<table class="propertyvalue-table">
+										<tr>
+											<!-- The first property and value input pair -->
+											<td class="propval-input-cell"><input name="prop-0-0" id="prop-0-0" type="text" placeholder="Property" value="" data-autosave-url="http://localhost:5501/save-css"></td>
+											<td class="propval-input-cell"><input name="val-0-0" id="val-0-0" type="text" placeholder="Value" value="" data-autosave-url="http://localhost:5501/save-css"></td>
+										</tr> 
+									</table>
+								</td>
+							</tr>
+							
+							<!-- CSS Block Border  -->
+							<tr>
+								<td class="border-td"></td>
+								<td class="border-td"></td>
+							</tr>
+
+							<tr>
+								<th id="selector-cell-1-0" scope="row" class="scope" >
+									<input type="text" class="css-selector-input-cell" placeholder="CSS Selector" value="" data-autosave-url="http://localhost:5501/save-css">
+								</th>
+								<td class="main-cell">
+									<table class="propertyvalue-table">
+										<tr>
+											<td class="propval-input-cell"><input type="text" placeholder="Property" value="" data-autosave-url="http://localhost:5501/save-css"></td>
+											<td class="propval-input-cell"><input type="text" placeholder="Value" value="" data-autosave-url="http://localhost:5501/save-css"></td>
+										</tr> 
+									</table>
+								</td>
+							</tr>
+							</tbody>
+						</table>
+						<br>
+						<input type="submit" value="Add CSS Block" onclick="addCSSBlock()">
+					</div>
+				</div>
+			</div>
+		</section>
+		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+		<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	</body>
+</html>
+
